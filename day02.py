@@ -5,15 +5,9 @@ def main():
     aoc.header("1202 Program Alarm")
     test()
 
-    t0 = time.perf_counter()
-    p1 = part1()
-    t1 = time.perf_counter()
-    print(f"Part 1:\t{p1}\t[{(t1-t0)*1000:.2f} ms]")
-
-    t0 = time.perf_counter()
-    p2 = part2()
-    t1 = time.perf_counter()
-    print(f"Part 2:\t{p2}\t[{(t1-t0)*1000:.2f} ms]")
+    aoc.output(1, part1)
+    aoc.output(2, part2, comment="Nested loop")
+    aoc.output(2, part2_mp, comment="Multiprocessing")
 
 def test():
     # part 1
@@ -27,7 +21,7 @@ def test():
     assert_becomes([2,3,0,3,99], "2,3,0,6,99")
     assert_becomes([2,4,4,5,99,0], "2,4,4,5,99,9801")
     assert_becomes([1,1,1,4,99,5,6,0,99], "30,1,1,4,2,5,6,0,99")
-    print("All tests passed!")
+    print("✓ All tests passed!")
 
 def part1():
     return run(12,2)
@@ -37,6 +31,17 @@ def part2():
         for verb in range(100):
             if run(noun, verb) == 19690720:
                 return (100*noun) + verb
+
+def part2_mp():
+    from multiprocessing import Pool
+    args = [(noun, verb) for noun in range(100) for verb in range(100)]
+    with Pool() as p:
+        it = p.imap(run_mp, args)
+        result = next(r for r in it if r[0] == 19690720)
+        noun,verb = result[1:]
+        return (100*noun) + verb
+
+def run_mp(t : typing.Tuple[int]): return(run(*t), *t)
 
 def run(noun : int, verb : int):
     initial_memory = [int(x) for x in aoc.get_input().readline().split(",")]

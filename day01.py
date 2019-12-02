@@ -5,16 +5,8 @@ def main():
     aoc.header("The Tyranny of the Rocket Equation")
     test()
 
-    t0 = time.perf_counter()
-    p1 = part1()
-    t1 = time.perf_counter()
-    print(f"Part 1:\t{p1}\t[{(t1-t0)*1000:.2f} ms]")
-    
-    t0 = time.perf_counter()
-    p2 = part2()
-    t1 = time.perf_counter()
-    print(f"Part 1:\t{p2}\t[{(t1-t0)*1000:.2f} ms]")
-    
+    aoc.output(1, part1)
+    aoc.output(2, part2)    
 
 def part1():
     return sum(map(get_fuel_required, map(int, aoc.get_input().readlines())))
@@ -34,7 +26,7 @@ def test():
     assert get_fuel_required_recursive(1969) == 966
     assert get_fuel_required_recursive(100756) == 50346
 
-    print("All tests passed!")
+    print("✓ All tests passed!")
 
 @functools.lru_cache
 def get_fuel_required(mass : int):
