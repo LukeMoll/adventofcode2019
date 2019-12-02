@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, shutil
 import __main__
 
 def get_input():
@@ -11,6 +11,11 @@ def get_input():
 
 def header(subtitle : str):
     day = __main__.__file__.replace("day", "").replace(".py", "")
-    print(f" Advent of Code 2019 - Day {int(day)}")
-    print(" " + subtitle)
+    title = f"Advent of Code 2019 – Day {int(day)}"
+    width = min(shutil.get_terminal_size().columns, 55)
+
+    print(f" ╭{'─' * (width - 3)}╮")
+    print(f" │ {{:^{width - 5}}} │".format(title))
+    print(f" │ {{:^{width - 5}}} │".format(subtitle))
+    print(f" ╰{'─' * (width - 3)}╯")
     print()
