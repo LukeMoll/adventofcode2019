@@ -75,8 +75,8 @@ def main():
     aoc.header("Your title here")
     test()
 
-    aoc.output(1, part1)
-    aoc.output(2, part2)
+    # aoc.output(1, part1)
+    # aoc.output(2, part2)
 
 def test():
     pass
