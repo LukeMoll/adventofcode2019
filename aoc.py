@@ -35,11 +35,12 @@ def output(part : int, func, post=None, comment=None, args=[], kwargs={}):
 
     if comment is not None: print(f"   {comment}")
     if post is not None:
-        post(result)
+        print(f"   {post(result)}")
     else:
         print(f"   {result}")
     
     print()
+    return result
 
 def run_tests():
     try:
@@ -48,10 +49,6 @@ def run_tests():
         t1 = time.perf_counter()
         print("✓ All tests passed!")
         print(f"   Elapsed: {(t1-t0)*1000:>10.3f} ms")
-    except NameError as e:
-        print(f"✗ NameError:")
-        print(f"   {e}")
-        print(f"   Have you defined test()?")
     except AssertionError as e:
         print(f"✗ Tests failed!\n")
         raise e
@@ -96,7 +93,6 @@ def main():
 
 def test():
     pass
-    print("✓ All tests passed!")
 
 def part1():
     pass
