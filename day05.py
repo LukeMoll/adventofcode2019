@@ -4,7 +4,7 @@ import typing, itertools
 
 def main():
     aoc.header("Sunny with a Chance of Asteroids")
-    test()
+    aoc.run_tests()
 
     test_program = list(map(int, aoc.get_input().readline().split(",")))
     aoc.output(1, run, args=[test_program, [1], INSTRUCTIONS_P1])
@@ -83,7 +83,6 @@ def test():
 
     for i in [5,6,7,8,9,10,11,12]: large_example(i)
 
-    print("✓ All tests passed!")
 
 def run(initial_memory : typing.List[int], inpt : typing.List[int], instruction_set):
     machine = IntcodeMachine(initial_memory, instruction_set, inpt=inpt)

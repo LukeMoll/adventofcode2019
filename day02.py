@@ -3,7 +3,7 @@ import typing, time
 
 def main():
     aoc.header("1202 Program Alarm")
-    test()
+    aoc.run_tests()
 
     aoc.output(1, part1)
     aoc.output(2, part2, comment="Nested loop")
@@ -21,7 +21,6 @@ def test():
     assert_becomes([2,3,0,3,99], "2,3,0,6,99")
     assert_becomes([2,4,4,5,99,0], "2,4,4,5,99,9801")
     assert_becomes([1,1,1,4,99,5,6,0,99], "30,1,1,4,2,5,6,0,99")
-    print("✓ All tests passed!")
 
 def part1():
     return run(12,2)

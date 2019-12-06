@@ -4,7 +4,7 @@ from enum import Enum
 
 def main():
     aoc.header("Secure Container")
-    test()
+    aoc.run_tests()
 
     (lower, upper) = aoc.get_input().readline().split("-")
     aoc.output(1, part, args=[int(lower),int(upper),validate_p1])
@@ -18,8 +18,6 @@ def test():
     assert rule4("112233")
     assert not rule4("123444")
     assert rule4("111122")
-
-    print("✓ All tests passed!")
 
 def part(lower : int, upper : int, validate):
     i = lower

@@ -41,6 +41,22 @@ def output(part : int, func, post=None, comment=None, args=[], kwargs={}):
     
     print()
 
+def run_tests():
+    try:
+        t0 = time.perf_counter()
+        __main__.test()
+        t1 = time.perf_counter()
+        print("✓ All tests passed!")
+        print(f"   Elapsed: {(t1-t0)*1000:>10.3f} ms")
+    except NameError as e:
+        print(f"✗ NameError:")
+        print(f"   {e}")
+        print(f"   Have you defined test()?")
+    except AssertionError as e:
+        print(f"✗ Tests failed!\n")
+        raise e
+    print()
+
 def __find_next_day():
     days = map(
         lambda fn: int(os.path.basename(fn).replace("day","").replace(".py","")),

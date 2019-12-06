@@ -3,7 +3,7 @@ import aoc
 
 def main():
     aoc.header("The Tyranny of the Rocket Equation")
-    test()
+    aoc.run_tests()
 
     aoc.output(1, part1)
     aoc.output(2, part2)    
