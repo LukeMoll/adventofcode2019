@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
 def main():
     aoc.header("Your title here")
-    test()
+    aoc.run_tests()
 
     # aoc.output(1, part1)
     # aoc.output(2, part2)
