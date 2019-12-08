@@ -165,7 +165,11 @@ class IInput(Instruction):
     OPERANDS = 1
     @staticmethod
     def exec(full_opcode : int, machine, op):
-        machine.store(op, machine.input.pop(0))
+        if len(machine.input) > 0:
+            machine.store(op, machine.input.pop(0))
+        else:
+            machine.pc -= 2
+            raise EOFError("Out of input!")
 
 class IOutput(Instruction):
     OPCODE = 4
