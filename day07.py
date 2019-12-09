@@ -1,11 +1,15 @@
 import aoc
-from day05 import IntcodeMachine, INSTRUCTIONS_P2
+from intcode import IntcodeMachine
 from typing import List, Tuple
 from functools import lru_cache
 from itertools import permutations
 from operator import itemgetter
+from instruction import *
 
 Settings = Tuple[int,int,int,int,int]
+INSTRUCTIONS = {
+    i.OPCODE : i for i in [IAdd, IMult, IHalt, IInput, IOutput, IJumpNZ, IJumpZ, ILessThan, IEquals]
+}
 
 def main():
     aoc.header("Amplification Circuit")
@@ -39,7 +43,7 @@ def part2(program : List[int]):
     return val
 
 def amplifier(program : List[int], input_value : int, setting : int) -> int:
-    m = IntcodeMachine(program, INSTRUCTIONS_P2, inpt=[setting, input_value])
+    m = IntcodeMachine(program, INSTRUCTIONS, inpt=[setting, input_value])
     while m.step(): pass
     return m.output[-1] if len(m.output) > 0 else None
 
@@ -54,7 +58,7 @@ def feedback_sequence(program : List[int], settings: Settings):
     output_vals = set()
     val = 0
     amplifiers : List[IntcodeMachine] = [
-        IntcodeMachine(program, INSTRUCTIONS_P2, inpt=[s]) for s in settings
+        IntcodeMachine(program, INSTRUCTIONS, inpt=[s]) for s in settings
     ]
 
     while True:

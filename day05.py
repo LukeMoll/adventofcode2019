@@ -1,6 +1,7 @@
 import aoc
-from enum import IntEnum
 import typing, itertools
+from intcode import IntcodeMachine
+from instruction import * # shush I know what I'm doing
 
 def main():
     aoc.header("Sunny with a Chance of Asteroids")
@@ -12,8 +13,8 @@ def main():
 
 def test():
     for enc_mode in map(lambda x:x*100, [0,1,10,11,100,101,110,111]):
-        dec_mode = Instruction.decode_modes(enc_mode)
-        assert Instruction.encode_modes(dec_mode) == enc_mode, f"Expected {enc_mode}, got {Instruction.encode_modes(dec_mode)} (Decoded {dec_mode})"
+        dec_mode = IntcodeInstruction.decode_modes(enc_mode)
+        assert IntcodeInstruction.encode_modes(dec_mode) == enc_mode, f"Expected {enc_mode}, got {Instruction.encode_modes(dec_mode)} (Decoded {dec_mode})"
 
     def assert_finishes(
         initial_memory,
@@ -25,7 +26,7 @@ def test():
 
         def f():
             for ele in initial_memory:
-                if issubclass(ele.__class__, Instruction):
+                if issubclass(ele.__class__, IntcodeInstruction):
                     # ele is an Instruction, we should expand it and flatten the result
                     for opcode in ele.expand(): yield opcode
                 else: yield ele
@@ -94,134 +95,6 @@ def run(initial_memory : typing.List[int], inpt : typing.List[int], instruction_
 def part2():
     pass
 
-class Mode(IntEnum):
-    DIRECT    = 0 # Operand is an address of the value 
-    IMMEDIATE = 1 # Operand is the value
-
-class Instruction:
-    def __init__(self, *args):
-        assert len(args) == self.OPERANDS
-        self.args = args
-
-    def expand(self):
-        return (
-            self.OPCODE + 
-            Instruction.encode_modes([
-                Mode.IMMEDIATE if type(a) == str else Mode.DIRECT
-                for a in self.args
-            ]),
-            *map(int, self.args)
-        )
-
-    @staticmethod
-    def exec(full_opcode : int, machine, *args):
-        raise NotImplemented()
-
-    @staticmethod
-    def decode_modes(full_opcode : int) -> typing.Sequence[Mode]:
-        m_str = f"{full_opcode//100:03}"
-        return tuple(Mode(int(c)) for c in m_str[::-1])
-
-    @staticmethod
-    def encode_modes(modes : typing.Sequence[Mode]):
-        result = 0
-        for i in range(len(modes)):
-            result += modes[i] * 10**(2+i)
-        return result
-
-class IAdd(Instruction):
-    OPCODE = 1
-    OPERANDS = 3
-    @staticmethod
-    def exec(full_opcode : int, machine, op0, op1, op2):
-        modes = Instruction.decode_modes(full_opcode)
-        machine.store(
-            op2,
-            machine.fetch(op0, modes[0]) +
-            machine.fetch(op1, modes[1]) 
-        )
-
-class IMult(Instruction):
-    OPCODE = 2
-    OPERANDS = 3
-    @staticmethod
-    def exec(full_opcode : int, machine, op0, op1, op2):
-        modes = Instruction.decode_modes(full_opcode)
-        machine.store(
-            op2,
-            machine.fetch(op0, modes[0]) *
-            machine.fetch(op1, modes[1]) 
-        )
-
-class IHalt(Instruction):
-    OPCODE = 99
-    OPERANDS = 0
-    @staticmethod
-    def exec(full_opcode : int, machine):
-        machine.running = False
-
-class IInput(Instruction):
-    OPCODE = 3
-    OPERANDS = 1
-    @staticmethod
-    def exec(full_opcode : int, machine, op):
-        if len(machine.input) > 0:
-            machine.store(op, machine.input.pop(0))
-        else:
-            machine.pc -= 2
-            raise EOFError("Out of input!")
-
-class IOutput(Instruction):
-    OPCODE = 4
-    OPERANDS = 1
-    @staticmethod
-    def exec(full_opcode : int, machine, op):
-        modes = Instruction.decode_modes(full_opcode)
-        val = machine.fetch(op, modes[0])
-        machine.output.append(val)
-
-class IJumpNZ(Instruction):
-    OPCODE = 5
-    OPERANDS = 2
-    @staticmethod
-    def exec(full_opcode : int, machine, op0, op1):
-        modes = Instruction.decode_modes(full_opcode)
-        if machine.fetch(op0, modes[0]) != 0:
-            machine.jump(machine.fetch(op1, modes[1]))
-
-class IJumpZ(Instruction):
-    OPCODE = 6
-    OPERANDS = 2
-    @staticmethod
-    def exec(full_opcode : int, machine, op0, op1):
-        modes = Instruction.decode_modes(full_opcode)
-        if machine.fetch(op0, modes[0]) == 0:
-            machine.jump(machine.fetch(op1, modes[1]))
-
-class ILessThan(Instruction):
-    OPCODE = 7
-    OPERANDS = 3
-    @staticmethod
-    def exec(full_opcode : int, machine, op0, op1, op2):
-        modes = Instruction.decode_modes(full_opcode)
-        if machine.fetch(op0, modes[0]) < machine.fetch(op1, modes[1]):
-            val = 1
-        else: val = 0
-
-        machine.store(op2, val)
-
-class IEquals(Instruction):
-    OPCODE = 8
-    OPERANDS = 3
-    @staticmethod
-    def exec(full_opcode : int, machine, op0, op1, op2):
-        modes = Instruction.decode_modes(full_opcode)
-        if machine.fetch(op0, modes[0]) == machine.fetch(op1, modes[1]):
-            val = 1
-        else: val = 0
-
-        machine.store(op2, val)
-
 INSTRUCTIONS_P1 = {
     i.OPCODE : i for i in [IAdd, IMult, IHalt, IInput, IOutput]
 }
@@ -229,64 +102,6 @@ INSTRUCTIONS_P1 = {
 INSTRUCTIONS_P2 = {
     i.OPCODE : i for i in [IAdd, IMult, IHalt, IInput, IOutput, IJumpNZ, IJumpZ, ILessThan, IEquals]
 }
-
-class IntcodeMachine: 
-
-    def __init__(self, initial_memory : typing.List[int], instruction_set : typing.Dict[int, Instruction], inpt=[]):
-        self.memory = {
-            i:initial_memory[i] for i in range(len(initial_memory))
-        }
-        self.memory_top = len(initial_memory) + 1
-        self.pc = -1
-        self.running = True
-        self.jumped = False
-        self.input = inpt
-        self.output = []
-        self.instruction_set = instruction_set
-
-    def next_pc(self):
-        if self.jumped: 
-            self.jumped = False
-            return self.pc
-
-        self.pc += 1
-        while self.pc not in self.memory: 
-            self.pc += 1
-            if self.pc > self.memory_top:
-                # Halt; run off the end of memory
-                raise KeyError("Run off the end of memory!")
-        return self.pc
-
-    def step(self) -> bool:
-        try: full_opcode = self.memory[self.next_pc()]
-        except KeyError: return False
-
-        inst = self.instruction_set[full_opcode % 100]
-        args = tuple(
-            self.memory[self.next_pc()]
-            for _ in range(inst.OPERANDS)
-        )
-        # print(full_opcode, *args)
-        inst.exec(full_opcode, self, *args)
-        return self.running
-
-
-    def fetch(self, op, mode : Mode):
-        if mode == Mode.IMMEDIATE: return op
-        # else
-        if op in self.memory:
-            return self.memory[op]
-        else:
-            raise RuntimeError(f"Uninitialised access at address {op}")
-
-    def store(self, address : int, value : int):
-        self.memory[address] = value
-        if address > self.memory_top: self.memory_top = address + 1
-
-    def jump(self, address):
-        self.pc = address
-        self.jumped = True
-
 
 if __name__ == "__main__":
     main()
