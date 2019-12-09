@@ -5,6 +5,7 @@ from enum import IntEnum
 class AddressingMode(IntEnum):
     DIRECT    = 0 # Operand is an address of the value 
     IMMEDIATE = 1 # Operand is the value
+    RELATIVE  = 2
 
 class IntcodeInstruction:
     def __init__(self, *args):
@@ -46,7 +47,8 @@ class IAdd(IntcodeInstruction):
         machine.store(
             op2,
             machine.fetch(op0, modes[0]) +
-            machine.fetch(op1, modes[1]) 
+            machine.fetch(op1, modes[1]),
+            modes[2] 
         )
 
 class IMult(IntcodeInstruction):
@@ -58,7 +60,8 @@ class IMult(IntcodeInstruction):
         machine.store(
             op2,
             machine.fetch(op0, modes[0]) *
-            machine.fetch(op1, modes[1]) 
+            machine.fetch(op1, modes[1]),
+            modes[2] 
         )
 
 class IHalt(IntcodeInstruction):
@@ -73,8 +76,10 @@ class IInput(IntcodeInstruction):
     OPERANDS = 1
     @staticmethod
     def exec(full_opcode : int, machine, op):
+        mode = IntcodeInstruction.decode_modes(full_opcode)[0]
         if len(machine.input) > 0:
-            machine.store(op, machine.input.pop(0))
+            val = machine.input.pop(0)
+            machine.store(op, val, mode)
         else:
             machine.pc -= 2
             raise EOFError("Out of input!")
@@ -116,7 +121,7 @@ class ILessThan(IntcodeInstruction):
             val = 1
         else: val = 0
 
-        machine.store(op2, val)
+        machine.store(op2, val, modes[2])
 
 class IEquals(IntcodeInstruction):
     OPCODE = 8
@@ -128,4 +133,12 @@ class IEquals(IntcodeInstruction):
             val = 1
         else: val = 0
 
-        machine.store(op2, val)
+        machine.store(op2, val, modes[2])
+
+class IAdjustOffset(IntcodeInstruction):
+    OPCODE = 9
+    OPERANDS = 1
+    @staticmethod
+    def exec(full_opcode : int, machine, op):
+        mode = IntcodeInstruction.decode_modes(full_opcode)[0]
+        machine.relbase += machine.fetch(op,mode)

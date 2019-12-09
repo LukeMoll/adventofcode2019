@@ -14,6 +14,7 @@ class IntcodeMachine:
         self.input = inpt
         self.output = []
         self.instruction_set = instruction_set
+        self.relbase = 0
 
     def next_pc(self):
         if self.jumped: 
@@ -37,7 +38,6 @@ class IntcodeMachine:
             self.memory[self.next_pc()]
             for _ in range(inst.OPERANDS)
         )
-        # print(full_opcode, *args)
         inst.exec(full_opcode, self, *args)
         return self.running
 
@@ -45,12 +45,18 @@ class IntcodeMachine:
     def fetch(self, op, mode : AddressingMode):
         if mode == AddressingMode.IMMEDIATE: return op
         # else
+        if mode == AddressingMode.RELATIVE: 
+            op += self.relbase
         if op in self.memory:
             return self.memory[op]
+        elif op < 0:
+            raise RuntimeError(f"Negative access at address {op}")
         else:
-            raise RuntimeError(f"Uninitialised access at address {op}")
+            print(f"Uninitialised access at address {op}, returning 0")
+            return 0
 
-    def store(self, address : int, value : int):
+    def store(self, address : int, value : int, mode : AddressingMode):
+        address = address + self.relbase if mode == AddressingMode.RELATIVE else address
         self.memory[address] = value
         if address > self.memory_top: self.memory_top = address + 1
 
