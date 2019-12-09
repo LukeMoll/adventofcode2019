@@ -24,7 +24,7 @@ def header(subtitle : str):
     print(f" ╰{'─' * (width - 3)}╯")
     print()
 
-def output(part : int, func, post=None, comment=None, args=[], kwargs={}):
+def output(part : int, func, post=None, output=None, comment=None, args=[], kwargs={}):
     print(f"⧖ Part {part}", end="", flush=True)
     t0 = time.perf_counter()
     result = func(*args, **kwargs)
@@ -34,10 +34,11 @@ def output(part : int, func, post=None, comment=None, args=[], kwargs={}):
     print(f"   Elapsed: {(t1-t0)*1000:>10.3f} ms")
 
     if comment is not None: print(f"   {comment}")
+    if output is None: output = lambda r: print(f"   {r}")
     if post is not None:
-        print(f"   {post(result)}")
+        output(post(result))
     else:
-        print(f"   {result}")
+        output(result)
     
     print()
     return result
