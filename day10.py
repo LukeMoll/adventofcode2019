@@ -3,8 +3,8 @@ from typing import List, Tuple, Set, Dict
 from collections import namedtuple
 import math
 from functools import lru_cache
+import itertools
 from operator import itemgetter
-from pprint import pprint
 
 class Vector(namedtuple('Vector', ['x','y'])):
     def __add__(self, other):
@@ -27,10 +27,11 @@ def main():
     aoc.header("Monitoring Station")
     aoc.run_tests()
 
-    aoc.output(1, part1)
-    # aoc.output(2, part2)
+    (asteroids, edge, station, _) = aoc.output(1, part1, post=itemgetter(3))
+    aoc.output(2, part2, args=[asteroids, edge, station])
 
 def test():
+    # part 1
     def assert_best(inp : List[str], station : Vector, count : int):
         (ast, edge) = to_points(inp)
         best = find_best(ast, edge)
@@ -84,7 +85,7 @@ def test():
         ".....#.#.."
     ], Vector(6,3), 41)
 
-    assert_best([
+    large_example = [
         ".#..##.###...#######",
         "##.############..##.",
         ".#.######.########.#",
@@ -105,15 +106,42 @@ def test():
         ".#.#.###########.###",
         "#.#.#.#####.####.###",
         "###.##.####.##.#..##"
-    ], Vector(11,13), 210)
+    ]
+    assert_best(large_example, Vector(11,13), 210)
+
+    # part 2
+    (ast, edge) = to_points(large_example)
+    (station, _) = find_best(ast,edge)
+    ast.remove(station)
+
+    vaporized_ordered = list(vaporize(station, rays_sorted(edge), ast, edge))
+    assert vaporized_ordered[:3] == [Vector(11,12),Vector(12,1),Vector(12,2)]
+
+    assert vaporized_ordered[9]  == Vector(12,8)
+    assert vaporized_ordered[19] == Vector(16,0)
+    assert vaporized_ordered[49] == Vector(16,9)
+    assert vaporized_ordered[99] == Vector(10,16)
+
+    assert vaporized_ordered[198] == Vector(9,6)
+    assert vaporized_ordered[199] == Vector(8,2)
+    assert vaporized_ordered[200] == Vector(10,9)
+
+    assert vaporized_ordered[298] == Vector(11,1)
+    assert len(vaporized_ordered) == 299
+
+    assert next(itertools.islice(vaporized_ordered, 199, None)) == Vector(8,2)
+
 
 def part1():
     (asteroids, edge) = to_points(aoc.get_input().readlines())
     best = find_best(asteroids, edge)
-    return best[1]
+    return (asteroids, edge, best[0], best[1])
 
-def part2():
-    pass
+def part2(asteroids, edge, station):
+    asteroids.remove(station)
+    it = vaporize(station, rays_sorted(edge), asteroids, edge)
+    v = next(itertools.islice(it, 199, None))
+    return (v.x * 100) + v.y
 
 def to_points(lines : List[str]) -> Tuple[Set[Vector], Vector]:
     edge = Vector(len(lines[-1]) - 1, len(lines) - 1)
@@ -135,20 +163,6 @@ def edges(edge : Vector):
 def in_field(test : Vector, edge : Vector):
         return 0<=test.x<=edge.x and 0<=test.y<=edge.y
 
-def rays(origin : Vector, edge : Vector, edge_vectors):
-    # This is problematic
-    # Consider a ray of normalised length
-    # where 1 step from the origin is before the edge, 
-    # and two steps from the origin is after the edge
-    # It will never be generated
-    rays = set()
-    for e in map(lambda e: e - origin, edge_vectors):
-        if (g := math.gcd(e.x,e.y)) > 1:
-            rays.add(Vector(e.x//g, e.y//g))
-        elif g > 0:
-            rays.add(e)
-    return rays
-
 @lru_cache
 def rays_fixed(edge : Vector):
     def it(origin : Vector):
@@ -164,25 +178,36 @@ def rays_fixed(edge : Vector):
     rays.update(it(Vector( edge.x, edge.y )))
     return rays
 
+@lru_cache
+def rays_sorted(edge : Vector):
+    rays = rays_fixed(edge)
+    return list(sorted(rays, key=lambda V:math.atan2(V.x, V.y), reverse=True))
+
 def trace(origin : Vector, rays: Set[Vector], asteroids : Set[Vector], edge : Vector) -> Set[Vector]:
     for ray in rays:
-        # print(f" Tracing along {ray}", end="", flush=True)
         p = origin + ray
         while in_field(p, edge):
-            # print(".", end="", flush=True)
             if p in asteroids:
                 yield p
-                # print(f"asteroid at {p}")
                 break
             p = p + ray
-        # print()
+
+def vaporize(origin : Vector, rays_clockwise : List[Vector], asteroids : Set[Vector], edge : Vector):
+    for ray in itertools.cycle(rays_clockwise):
+        p = origin + ray
+        while in_field(p, edge):
+            if p in asteroids:
+                yield p
+                asteroids.remove(p)
+                break # while in_field, go to next iteration of for
+            p = p + ray
+        if len(asteroids) == 0: break
+
 
 def naive_raytrace(asteroids : Set[Vector], edge : Vector):
     r = rays_fixed(edge)
 
     for asteroid in asteroids:
-        # print(f"Tracing from {asteroid}")
-        # print(f" Got rays ({len(r)})")
         yield asteroid, trace(asteroid, r, asteroids, edge)
 
 def find_best(asteroids : Set[Vector], edge : Vector):
@@ -208,7 +233,6 @@ def print_field(mappings : Dict[str,Set[Vector]], edge : Vector):
     for line in field:
         print("".join(line))
 
-    
 
 if __name__ == "__main__":
     main()
