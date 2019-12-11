@@ -52,7 +52,7 @@ class IntcodeMachine:
         elif op < 0:
             raise RuntimeError(f"Negative access at address {op}")
         else:
-            print(f"Uninitialised access at address {op}, returning 0")
+            # print(f"Uninitialised access at address {op}, returning 0")
             return 0
 
     def store(self, address : int, value : int, mode : AddressingMode):
